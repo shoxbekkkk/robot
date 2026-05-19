@@ -12,7 +12,7 @@ from aiohttp import web
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TOKEN = os.environ.get("BOT_TOKEN", "8915839857:AAFctENKZly0ZVrqa3iWvVQnwMCVh1KMFUA")
+TOKEN = os.environ.get("BOT_TOKEN", "8864381983:AAGUx_G0tpO7aA4320fbwgWZ5mL5_NhmQdg")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8149451732"))  # O'zingizning Telegram ID'ngizni yozing
 
 if not TOKEN:
