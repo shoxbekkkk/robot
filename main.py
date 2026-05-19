@@ -12,7 +12,7 @@ from aiohttp import web
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TOKEN = os.environ.get("BOT_TOKEN", "8864381983:AAGUx_G0tpO7aA4320fbwgWZ5mL5_NhmQdg")
+TOKEN = os.environ.get("BOT_TOKEN", "8915839857:AAFctENKZly0ZVrqa3iWvVQnwMCVh1KMFUA")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8149451732"))  # O'zingizning Telegram ID'ngizni yozing
 
 if not TOKEN:
@@ -38,14 +38,17 @@ def load_questions():
                 if "allowed_users" not in data:
                     data["allowed_users"] = []
                 return data
-    except Exception as e:
+    except (json.JSONDecodeError, Exception) as e:
         logger.error(f"Yuklashda xato: {e}")
     return default_structure
 
 def save_questions(qs):
-    with open("questions.json", "w", encoding="utf-8") as file:
-        json.dump(qs, file, ensure_ascii=False, indent=2)
-
+    try:
+        with open("questions.json", "w", encoding="utf-8") as file:
+            json.dump(qs, file, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"Saqlashda xato: {e}")
+        
 DATA = load_questions()
 
 def is_allowed(user_id):
@@ -237,6 +240,7 @@ async def handle_poll_import(message: types.Message):
             "options": options,
             "correct": correct_option
         })
+        await message.reply(f"📥 Qabul qilindi! Jami: {len(DATA['blocks'][b_id]['questions'])} ta")
 
 @dp.message(F.document, F.from_user.id == ADMIN_ID)
 async def handle_file_upload(message: types.Message):
@@ -255,7 +259,7 @@ async def handle_file_upload(message: types.Message):
                     "correct": parts[-1]
                 })
         save_questions(DATA)
-        await message.answer(f"✅ Fayldan savollar qo'shildi.")
+        await message.answer(f"✅ Fayldan savollar qo'shildi. Jami: {len(DATA['blocks'][b_id]['questions'])} ta")
 
 @dp.message(Command("quiz"))
 async def choose_block_msg(message: types.Message):
@@ -486,8 +490,11 @@ async def finish_quiz(chat_id, auto_paused=False):
             
     await bot.send_message(chat_id, report, parse_mode="Markdown")
     
-    if game["current_poll_id"] in poll_to_chat:
-        del poll_to_chat[game["current_poll_id"]]
+    # Ushbu chatga tegishli barcha poll_id larni tozalash
+    to_remove = [k for k, v in poll_to_chat.items() if v == chat_id]
+    for k in to_remove:
+        poll_to_chat.pop(k, None)
+        
     del games[chat_id]
 
 # --- RENDER UCHUN VEB-SERVER QISMI ---
